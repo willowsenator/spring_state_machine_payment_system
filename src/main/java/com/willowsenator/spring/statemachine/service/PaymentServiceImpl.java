@@ -32,21 +32,21 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public StateMachine<PaymentState, PaymentEvent> preAuth(UUID paymentId) {
         var sm = build(paymentId);
-        sendEvent(paymentId, sm, PaymentEvent.PRE_AUTHORIZE);
+        sendEvent(paymentId, sm, PaymentEvent.PRE_AUTHORIZE).blockFirst();
         return null;
     }
 
     @Override
     public StateMachine<PaymentState, PaymentEvent> authorizePayment(UUID paymentId) {
         var sm = build(paymentId);
-        sendEvent(paymentId, sm, PaymentEvent.AUTH_APPROVED);
+        sendEvent(paymentId, sm, PaymentEvent.AUTH_APPROVED).blockFirst();
         return null;
     }
 
     @Override
     public StateMachine<PaymentState, PaymentEvent> declineAuth(UUID paymentId) {
         var sm = build(paymentId);
-        sendEvent(paymentId, sm, PaymentEvent.AUTH_DECLINED);
+        sendEvent(paymentId, sm, PaymentEvent.AUTH_DECLINED).blockFirst();
         return null;
     }
 
