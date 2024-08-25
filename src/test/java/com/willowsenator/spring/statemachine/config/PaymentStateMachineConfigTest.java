@@ -2,6 +2,7 @@ package com.willowsenator.spring.statemachine.config;
 
 import com.willowsenator.spring.statemachine.domain.PaymentEvent;
 import com.willowsenator.spring.statemachine.domain.PaymentState;
+import com.willowsenator.spring.statemachine.listener.PaymentStateMachineListener;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,6 +17,9 @@ import java.util.UUID;
 class PaymentStateMachineConfigTest {
     @Autowired
     StateMachineFactory<PaymentState, PaymentEvent> factory;
+
+    @Autowired
+    PaymentStateMachineListener listener;
 
     @Test
     void testNewStateMachine() {
