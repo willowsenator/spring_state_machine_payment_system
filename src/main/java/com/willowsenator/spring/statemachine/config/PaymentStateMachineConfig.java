@@ -2,18 +2,22 @@ package com.willowsenator.spring.statemachine.config;
 
 import com.willowsenator.spring.statemachine.domain.PaymentEvent;
 import com.willowsenator.spring.statemachine.domain.PaymentState;
-import com.willowsenator.spring.statemachine.listener.PaymentStateMachineListener;
-import lombok.AllArgsConstructor;
+import com.willowsenator.spring.statemachine.listener.PaymentStateChangedListener;
+import com.willowsenator.spring.statemachine.service.PaymentServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.statemachine.action.Action;
 import org.springframework.statemachine.config.EnableStateMachineFactory;
 import org.springframework.statemachine.config.EnumStateMachineConfigurerAdapter;
 import org.springframework.statemachine.config.builders.StateMachineConfigurationConfigurer;
 import org.springframework.statemachine.config.builders.StateMachineStateConfigurer;
 import org.springframework.statemachine.config.builders.StateMachineTransitionConfigurer;
+import reactor.core.publisher.Mono;
 
 import java.util.EnumSet;
+import java.util.UUID;
 
 @EnableStateMachineFactory
 @Slf4j
@@ -21,7 +25,7 @@ import java.util.EnumSet;
 @RequiredArgsConstructor
 public class PaymentStateMachineConfig extends EnumStateMachineConfigurerAdapter<PaymentState, PaymentEvent> {
 
-    private final PaymentStateMachineListener paymentStateMachineListener;
+    private final PaymentStateChangedListener paymentStateChangedListener;
 
     @Override
     public void configure(StateMachineStateConfigurer<PaymentState, PaymentEvent> states) throws Exception {
@@ -37,25 +41,36 @@ public class PaymentStateMachineConfig extends EnumStateMachineConfigurerAdapter
     public void configure(StateMachineTransitionConfigurer<PaymentState, PaymentEvent> transitions) throws Exception {
         transitions.withExternal()
                 .source(PaymentState.NEW).target(PaymentState.NEW).event(PaymentEvent.PRE_AUTHORIZE)
+                .action(preAuthAction())
                 .and()
                 .withExternal()
                 .source(PaymentState.NEW).target(PaymentState.PRE_AUTH).event(PaymentEvent.PRE_AUTH_APPROVED)
                 .and()
                 .withExternal()
                 .source(PaymentState.NEW).target(PaymentState.PRE_AUTH_ERROR).event(PaymentEvent.PRE_AUTH_DECLINED);
-                /*.and()
-                .withExternal()
-                .source(PaymentState.PRE_AUTH).target(PaymentState.PRE_AUTH).event(PaymentEvent.AUTHORIZE)
-                .and()
-                .withExternal()
-                .source(PaymentState.PRE_AUTH).target(PaymentState.AUTH).event(PaymentEvent.AUTH_APPROVED)
-                .and()
-                .withExternal()
-                .source(PaymentState.PRE_AUTH).target(PaymentState.AUTH_ERROR).event(PaymentEvent.AUTH_DECLINED);*/
     }
 
     @Override
     public void configure(StateMachineConfigurationConfigurer<PaymentState, PaymentEvent> config) throws Exception {
-        config.withConfiguration().listener(paymentStateMachineListener);
+        config.withConfiguration().listener(paymentStateChangedListener);
+    }
+
+    public Action<PaymentState, PaymentEvent> preAuthAction() {
+        return context -> {
+            log.info("PreAuth was called!!!");
+
+            int randomNum = (int) (Math.random() * 10);
+            if (randomNum < 8) {
+                log.info("Approved");
+                context.getStateMachine().sendEvent(Mono.just(MessageBuilder.withPayload(PaymentEvent.PRE_AUTH_APPROVED)
+                        .setHeader(PaymentServiceImpl.PAYMENT_ID_HEADER, context.getMessageHeader(PaymentServiceImpl.PAYMENT_ID_HEADER))
+                        .build()));
+            } else {
+                log.info("Declined! No Credit!!!!");
+                context.getStateMachine().sendEvent(Mono.just(MessageBuilder.withPayload(PaymentEvent.PRE_AUTH_DECLINED)
+                        .setHeader(PaymentServiceImpl.PAYMENT_ID_HEADER, context.getMessageHeader(PaymentServiceImpl.PAYMENT_ID_HEADER))
+                        .build()));
+            }
+        };
     }
 }

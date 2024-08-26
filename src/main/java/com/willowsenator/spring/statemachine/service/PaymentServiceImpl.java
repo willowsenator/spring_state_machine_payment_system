@@ -3,7 +3,9 @@ package com.willowsenator.spring.statemachine.service;
 import com.willowsenator.spring.statemachine.domain.Payment;
 import com.willowsenator.spring.statemachine.domain.PaymentEvent;
 import com.willowsenator.spring.statemachine.domain.PaymentState;
+import com.willowsenator.spring.statemachine.listener.PaymentPreStateChangeInterceptor;
 import com.willowsenator.spring.statemachine.repository.PaymentRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.statemachine.StateMachine;
@@ -20,8 +22,10 @@ import java.util.UUID;
 @Service
 public class PaymentServiceImpl implements PaymentService {
     public static final String PAYMENT_ID_HEADER = "payment_id";
+
     private final PaymentRepository paymentRepository;
     private final StateMachineFactory<PaymentState, PaymentEvent> stateMachineFactory;
+    private final PaymentPreStateChangeInterceptor paymentPreStateChangeInterceptor;
 
     @Override
     public Payment newPayment(Payment payment) {
@@ -29,25 +33,28 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentRepository.save(payment);
     }
 
+    @Transactional
     @Override
     public StateMachine<PaymentState, PaymentEvent> preAuth(UUID paymentId) {
         var sm = build(paymentId);
         sendEvent(paymentId, sm, PaymentEvent.PRE_AUTHORIZE).blockFirst();
-        return null;
+        return sm;
     }
 
+    @Transactional
     @Override
     public StateMachine<PaymentState, PaymentEvent> authorizePayment(UUID paymentId) {
         var sm = build(paymentId);
         sendEvent(paymentId, sm, PaymentEvent.AUTH_APPROVED).blockFirst();
-        return null;
+        return sm;
     }
 
+    @Transactional
     @Override
     public StateMachine<PaymentState, PaymentEvent> declineAuth(UUID paymentId) {
         var sm = build(paymentId);
         sendEvent(paymentId, sm, PaymentEvent.AUTH_DECLINED).blockFirst();
-        return null;
+        return sm;
     }
 
     private Flux<StateMachineEventResult<PaymentState, PaymentEvent>> sendEvent(
@@ -67,21 +74,24 @@ public class PaymentServiceImpl implements PaymentService {
         var sm = stateMachineFactory.getStateMachine(paymentId);
         startStateMachine(sm);
         resetStateMachineContext(sm, payment);
-
         stopStateMachine(sm);
         return sm;
     }
 
-    private static void stopStateMachine(StateMachine<PaymentState, PaymentEvent> sm) {
+    private void stopStateMachine(StateMachine<PaymentState, PaymentEvent> sm) {
         sm.startReactively().block();
     }
 
-    private static void startStateMachine(StateMachine<PaymentState, PaymentEvent> sm) {
+    private void startStateMachine(StateMachine<PaymentState, PaymentEvent> sm) {
         sm.stopReactively().block();
     }
 
-    private static void resetStateMachineContext(StateMachine<PaymentState, PaymentEvent> sm, Payment payment) {
+    private void resetStateMachineContext(StateMachine<PaymentState, PaymentEvent> sm, Payment payment) {
         sm.getStateMachineAccessor()
-                .doWithAllRegions(sma -> sma.resetStateMachineReactively(new DefaultStateMachineContext<>(payment.getState(), null, null, null)));
+                .doWithAllRegions(sma -> {
+                    sma.addStateMachineInterceptor(paymentPreStateChangeInterceptor);
+                    sma.resetStateMachineReactively(new DefaultStateMachineContext<>(payment.getState(), null, null, null));
+                    }
+                );
     }
 }
