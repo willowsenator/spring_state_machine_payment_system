@@ -64,18 +64,18 @@ public class PaymentServiceImpl implements PaymentService {
     private StateMachine<PaymentState, PaymentEvent> build(UUID paymentId) {
         var payment = paymentRepository.getReferenceById(paymentId);
         var sm = stateMachineFactory.getStateMachine(paymentId);
-        startStateMachine(sm);
-        resetStateMachineContext(sm, payment);
         stopStateMachine(sm);
+        resetStateMachineContext(sm, payment);
+        startStateMachine(sm);
         return sm;
     }
 
     private void stopStateMachine(StateMachine<PaymentState, PaymentEvent> sm) {
-        sm.startReactively().block();
+        sm.stopReactively().block();
     }
 
     private void startStateMachine(StateMachine<PaymentState, PaymentEvent> sm) {
-        sm.stopReactively().block();
+        sm.startReactively().block();
     }
 
     private void resetStateMachineContext(StateMachine<PaymentState, PaymentEvent> sm, Payment payment) {
