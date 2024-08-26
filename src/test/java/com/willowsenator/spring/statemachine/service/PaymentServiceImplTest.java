@@ -30,13 +30,13 @@ class PaymentServiceImplTest {
     void preAth() {
         var savedPayment = paymentService.newPayment(payment);
 
-        System.out.println("SHOULD BE NEW");
+        System.out.println("Shoud be NEW");
         System.out.println(savedPayment.getState());
 
         paymentService.preAuth(savedPayment.getId());
         var preAuthPayment = paymentRepository.getReferenceById(savedPayment.getId());
 
-        System.out.println("SHOULD BE PRE_AUTH");
+        System.out.println("Should be PRE_AUTH or PRE_AUTH_ERROR");
         System.out.println(preAuthPayment.getState());
 
         System.out.println(preAuthPayment);

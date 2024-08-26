@@ -17,7 +17,6 @@ import org.springframework.statemachine.config.builders.StateMachineTransitionCo
 import reactor.core.publisher.Mono;
 
 import java.util.EnumSet;
-import java.util.UUID;
 
 @EnableStateMachineFactory
 @Slf4j
@@ -64,12 +63,12 @@ public class PaymentStateMachineConfig extends EnumStateMachineConfigurerAdapter
                 log.info("Approved");
                 context.getStateMachine().sendEvent(Mono.just(MessageBuilder.withPayload(PaymentEvent.PRE_AUTH_APPROVED)
                         .setHeader(PaymentServiceImpl.PAYMENT_ID_HEADER, context.getMessageHeader(PaymentServiceImpl.PAYMENT_ID_HEADER))
-                        .build()));
+                        .build())).subscribe();
             } else {
                 log.info("Declined! No Credit!!!!");
                 context.getStateMachine().sendEvent(Mono.just(MessageBuilder.withPayload(PaymentEvent.PRE_AUTH_DECLINED)
                         .setHeader(PaymentServiceImpl.PAYMENT_ID_HEADER, context.getMessageHeader(PaymentServiceImpl.PAYMENT_ID_HEADER))
-                        .build()));
+                        .build())).subscribe();
             }
         };
     }

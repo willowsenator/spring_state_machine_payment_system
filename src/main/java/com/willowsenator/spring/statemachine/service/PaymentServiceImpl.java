@@ -37,7 +37,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public StateMachine<PaymentState, PaymentEvent> preAuth(UUID paymentId) {
         var sm = build(paymentId);
-        sendEvent(paymentId, sm, PaymentEvent.PRE_AUTHORIZE).blockFirst();
+        sendEvent(paymentId, sm, PaymentEvent.PRE_AUTHORIZE).subscribe();
         return sm;
     }
 
@@ -45,7 +45,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public StateMachine<PaymentState, PaymentEvent> authorizePayment(UUID paymentId) {
         var sm = build(paymentId);
-        sendEvent(paymentId, sm, PaymentEvent.AUTH_APPROVED).blockFirst();
+        sendEvent(paymentId, sm, PaymentEvent.AUTH_APPROVED).subscribe();
         return sm;
     }
 
@@ -53,7 +53,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public StateMachine<PaymentState, PaymentEvent> declineAuth(UUID paymentId) {
         var sm = build(paymentId);
-        sendEvent(paymentId, sm, PaymentEvent.AUTH_DECLINED).blockFirst();
+        sendEvent(paymentId, sm, PaymentEvent.AUTH_DECLINED).subscribe();
         return sm;
     }
 
@@ -90,7 +90,7 @@ public class PaymentServiceImpl implements PaymentService {
         sm.getStateMachineAccessor()
                 .doWithAllRegions(sma -> {
                     sma.addStateMachineInterceptor(paymentPreStateChangeInterceptor);
-                    sma.resetStateMachineReactively(new DefaultStateMachineContext<>(payment.getState(), null, null, null));
+                    sma.resetStateMachineReactively(new DefaultStateMachineContext<>(payment.getState(), null, null, null)).block();
                     }
                 );
     }
