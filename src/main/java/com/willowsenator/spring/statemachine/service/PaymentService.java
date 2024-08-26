@@ -11,5 +11,4 @@ public interface PaymentService {
     Payment newPayment(Payment payment);
     StateMachine<PaymentState, PaymentEvent> preAuth(UUID paymentId);
     StateMachine<PaymentState, PaymentEvent>  authorizePayment(UUID paymentId);
-    StateMachine<PaymentState, PaymentEvent>  declineAuth(UUID paymentId);
 }

@@ -45,15 +45,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public StateMachine<PaymentState, PaymentEvent> authorizePayment(UUID paymentId) {
         var sm = build(paymentId);
-        sendEvent(paymentId, sm, PaymentEvent.AUTH_APPROVED).subscribe();
-        return sm;
-    }
-
-    @Transactional
-    @Override
-    public StateMachine<PaymentState, PaymentEvent> declineAuth(UUID paymentId) {
-        var sm = build(paymentId);
-        sendEvent(paymentId, sm, PaymentEvent.AUTH_DECLINED).subscribe();
+        sendEvent(paymentId, sm, PaymentEvent.AUTHORIZE).subscribe();
         return sm;
     }
 
