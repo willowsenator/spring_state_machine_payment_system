@@ -6,7 +6,6 @@ import com.willowsenator.spring.statemachine.repository.PaymentRepository;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -28,7 +27,7 @@ class PaymentServiceImplTest {
     }
 
     @Transactional
-    @Test
+    @RepeatedTest(10)
     void preAth() {
         var savedPayment = paymentService.newPayment(payment);
 
