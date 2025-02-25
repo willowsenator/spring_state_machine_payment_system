@@ -33,7 +33,7 @@ public class PaymentPreStateChangeInterceptor extends StateMachineInterceptorAda
             var payment = paymentRepository.getReferenceById(paymentId);
             payment.setState(state.getId());
             paymentRepository.save(payment);
-            log.info(String.format("Saving state for payment id: %s, state: %s", paymentId, state.getId().name()));
+            log.info("Saving state for payment id: {}, state: {}", paymentId, state.getId().name());
         });
     }
 }

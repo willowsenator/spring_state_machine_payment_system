@@ -12,6 +12,6 @@ import org.springframework.stereotype.Component;
 public class PaymentStateChangedListener extends StateMachineListenerAdapter<PaymentState, PaymentEvent> {
     @Override
     public void stateChanged(State from, State to) {
-     log.info(String.format("State changed from %s to %s", from, to));
+     log.info("State changed from {} to {}", from, to);
     }
 }
